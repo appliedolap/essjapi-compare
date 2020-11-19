@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+	<title>Essbase Java API Evolution</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<style type="text/css">
+
+		ul.class-list {
+			list-style: none;
+			padding-left: 0;
+		}
+		ul.method-list {
+			list-style: none;
+			padding-left: 1em;
+		}
+		.version-row {
+			background-color: #eee;
+		}
+		.method-new {
+			color: green;
+		}
+		.method-removed {
+			color: red;
+		}
+		.method-modified {
+			color: gray;
+		}
+		.method-deprecated {
+			color: gray;
+			text-decoration: line-through;
+		}
+		.comma-list {
+			padding-left: 0;
+			display: inline;
+			list-style: none;
+		}
+		.comma-list li {
+			display: inline;
+		}
+		.comma-list li:after {
+			content: ", ";
+		}
+		.comma-list li:last-child:after  {
+			content: "";
+		}
+	</style>
+	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" rel="stylesheet"/>
+</head>
+<body style="font-size: 10pt;">
+	
+	<div class="jumbotron">
+		<div class="container-fluid">
+			<h1 class="display-3">Essbase Java API Evolution</h1>
+			<p>Changes to classes, interfaces, methods, and more in the Essbase Java API over time</p>
+		</div>
+	</div>
+	
+	<div class="table-responsive container-fluid">
+		<h2>Reading this table</h2>
+		<p>For each version of the JAR, there are several sections: added, modified, removed, and deprecated. The added section lists classes/interfaces that have been added that were not present in the previous version of the jar. Public methods for each class are also listed (since they are also new by definition). The modified section lists classes/interfaces that have been modified in some way, typically because a method in that object has been added, removed, or changed (new arguments, return type, or some other change). The removed section lists objects that have been removed. Lastly, the deprecated section lists objects and their methods that have been marked as deprecated).</p>
+		<p>Note that the change analyzer lists both base classes (such as <code>EssCube</code> as well as the more commonly used interface object for the corresponding class (such as <code>IEssCube</code>). Typically in the Essbase Java API, all operations are performed with interfaces. While you typically shouldn't program with the base classes, they are in fact public and are occasionally used.</p>
+		<p>New methods appear in <span class="method-new">green</span>, removed methods are in <span class="method-removed">red</span>, deprecated are marked with <span class="method-deprecated">strike-through</span>.</p>		
+				 
+		<h2>Versions</h2>		
+		<ul class="comma-list">
+			<li th:each="change : ${changes}"><a th:href="'#v' + ${change.currentVersion}" th:text="${change.currentVersion}">version</a></li>
+		</ul>
+		
+		<p></p>
+		
+		<table class="table table-bordered table-sm">
+			<caption>Overiew of Essbase Java API changes as observed in client JAPI JARs</caption>
+			<thead>
+				<tr>
+					<th>Change</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<th:block th:each="change,iter : ${changes}">
+				<tr class="version-row" th:id="'v' + ${change.currentVersion}">
+					<td>Version</td>
+					<td>
+						<div style="float:left;width:50%;">
+						<strong>
+							<span th:text="${change.currentVersion}">{current version}</span> &mdash;
+							previous: <span th:if="${iter.first}" th:text="${change.previousVersion}"></span>
+							<a th:unless="${iter.first}" th:href="'#v' + ${change.previousVersion}" th:text="${change.previousVersion}">{previous version}</a>
+							<span th:unless="${iter.last}">&mdash; next: <a th:href="'#v' + ${change.nextVersion}" th:text="${change.nextVersion}">{next version}</a></span>
+						</strong>
+						</div>
+						<div style="float:right;width:50%; text-align: right;">
+							<em><a href="#top">jump to top</a></em>
+						</div>
+					</td>		
+				</tr>
+				<tr style="vertical-align: top;" th:id="'v' + ${change.currentVersion} + '_added'">
+					<td>Added</td>
+					<td>
+						<ul class="class-list">
+							<li th:each="clazz : ${change.changes}" th:if="${clazz.changeStatus.name()} == 'NEW'">
+								<strong>
+									<span th:text="${clazz.accessModifier.valueNew.toLowerCase()}">public/private</span>
+									<span th:text="${clazz.classType.newType.toLowerCase()}">class type</span>
+									<span th:id="'v' + ${change.currentVersion} + '_added_' + ${clazz.fullyQualifiedName}" th:text="${clazz.fullyQualifiedName}" th:class="${clazz.classType.newType}">class name</span>
+								</strong> 
+								 
+								<ul class="method-list">
+									<li th:each="method : ${clazz.methods}" th:if="${method.changeStatus.name()} != 'UNCHANGED'">
+										<span th:text="${method.accessModifier.valueNew.toLowerCase()}"></span>
+										<span th:text="${method.returnType.newReturnType.startsWith('java.lang')} ? ${method.returnType.newReturnType.substring(10)} : ${method.returnType.newReturnType}">method name</span> 
+										<span th:text="${method.newMethod.get().longName}">method name</span>
+									</li>
+								</ul>
+							</li>
+						</ul>
+					</td>
+				</tr>
+			 	<tr th:id="'v' + ${change.currentVersion} + '_modified'">
+			 		<td>Modified</td>
+					<td>
+						<ul class="class-list">
+							<li th:each="clazz : ${change.changes}" th:if="${clazz.changeStatus.name()} == 'MODIFIED'">
+								<strong>
+									<span th:text="${clazz.accessModifier.valueNew.toLowerCase()}">public/private</span>
+									<span th:text="${clazz.classType.newType.toLowerCase()}">class type</span>
+									<span th:text="${clazz.fullyQualifiedName}" th:class="${clazz.classType.newType}">class name</span>
+								</strong> 
+								<ul class="method-list">
+									<li th:each="method : ${clazz.methods}" th:if="${method.changeStatus.name()} != 'UNCHANGED'"> 
+										<span th:if="${method.changeStatus.name()} == 'NEW'" th:text="${method.accessModifier.valueNew.toLowerCase()}"></span>
+										<span th:if="${method.changeStatus.name()} == 'REMOVED'" th:text="${method.accessModifier.valueOld.toLowerCase()}"></span>
+										<span th:if="${method.changeStatus.name()} == 'NEW'" th:text="${method.returnType.newReturnType}">return type</span> 
+										<span th:if="${method.changeStatus.name()} == 'REMOVED'" th:text="${method.returnType.oldReturnType}">return type</span>
+										<span th:if="${method.changeStatus.name()} == 'NEW'" th:class="'method-' + ${method.changeStatus.name().toLowerCase()}" th:text="${method.newMethod.get().longName}">method name</span>
+										<span th:if="${method.changeStatus.name()} == 'REMOVED'" th:class="'method-' + ${method.changeStatus.name().toLowerCase()}" th:text="${method.oldMethod.get().longName}">old method name</span>
+									</li>
+								</ul>
+							</li>
+						</ul>
+					</td>
+				</tr>
+				<tr th:id="'v' + ${change.currentVersion} + '_removed'">
+					<td>Removed
+					</td>
+					<td>
+						<ul>
+							<li th:each="clazz : ${change.changes}" th:if="${clazz.changeStatus.name()} == 'REMOVED'" th:text="${clazz.fullyQualifiedName}">class name</li>
+						</ul>
+					</td>
+				</tr>
+				<tr th:id="'v' + ${change.currentVersion} + '_deprecated'">
+					<td>Deprecated</td>
+					<td>
+						<ul class="class-list">
+							<li th:each="clazz : ${change.changes}" th:if="${@com.appliedolap.essjapicompare.TempCompare@classGainedDeprecatedMethods(clazz)}">
+								<span th:text="${clazz.fullyQualifiedName}">class name</span>
+								<ul class="method-list">
+									<li th:each="method : ${clazz.methods}" th:if="${@com.appliedolap.essjapicompare.TempCompare@isMethodNowDeprecated(method)}">
+										<span th:text="${method.accessModifier.valueNew.toLowerCase()}"></span>
+										<span th:text="${method.returnType.newReturnType}">return type</span> 
+										<span class="method-deprecated" th:text="${method.newMethod.get().longName}">method name</span>
+									</li>
+								</ul>
+							</li>
+						</ul>
+						
+					</td>
+				</tr>
+				</th:block>
+			</tbody>
+		</table>
+
+	</div>
+
+</body>
+</html>
