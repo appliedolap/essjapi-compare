@@ -22,11 +22,6 @@ public class ChangeSet {
 
 	private List<JApiClass> changes;
 
-	/**
-	 * @param currentVersion
-	 * @param previousVersion
-	 * @param changes
-	 */
 	public ChangeSet(Version currentVersion, Version previousVersion, List<JApiClass> changes) {
 		this.currentVersion = currentVersion;
 		this.previousVersion = previousVersion;

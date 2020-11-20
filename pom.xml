@@ -24,9 +24,9 @@
 			<type>jar</type>
 		</dependency>
 		<dependency>
-			<groupId>org.antlr</groupId>
-			<artifactId>ST4</artifactId>
-			<version>4.0.8</version>
+			<groupId>info.picocli</groupId>
+			<artifactId>picocli</artifactId>
+			<version>4.5.2</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>

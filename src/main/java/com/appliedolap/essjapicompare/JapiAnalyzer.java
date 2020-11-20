@@ -1,31 +1,26 @@
 package com.appliedolap.essjapicompare;
 
+import japicmp.cmp.JarArchiveComparator;
+import japicmp.cmp.JarArchiveComparatorOptions;
+import japicmp.model.JApiChangeStatus;
+import japicmp.model.JApiClass;
+import japicmp.model.JApiMethod;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
+import org.thymeleaf.templateresolver.ITemplateResolver;
+
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.Context;
-import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
-import org.thymeleaf.templateresolver.ITemplateResolver;
-
-import japicmp.cmp.JarArchiveComparator;
-import japicmp.cmp.JarArchiveComparatorOptions;
-import japicmp.config.Options;
-import japicmp.model.JApiAnnotation;
-import japicmp.model.JApiAttribute;
-import japicmp.model.JApiChangeStatus;
-import japicmp.model.JApiClass;
-import japicmp.model.JApiMethod;
-import japicmp.model.JApiModifier;
-import japicmp.output.stdout.StdoutOutputGenerator;
 
 public class JapiAnalyzer {
 
@@ -37,20 +32,30 @@ public class JapiAnalyzer {
 		
 		List<ChangeSet> changeSets = new ArrayList<ChangeSet>();
 		
-		int count = 0;
 		for (int index = 0; index < jars.size(); index++) {
 			Path currentJar = jars.get(index);
 			Path previousJar = index > 0 ? jars.get(index - 1) : null;
 						
 			System.out.println("JAR: " + currentJar.toAbsolutePath() + ", prev: " + previousJar);
 			if (previousJar != null) {
-				Version currentVersion = extractVersion(currentJar.getFileName().toString(), configuration.getPrefix());
-				Version previousVersion = extractVersion(previousJar.getFileName().toString(), configuration.getPrefix());
+				Version currentVersion;
+				Version previousVersion;
+				if (!configuration.isFolderPerVersion()) {
+					currentVersion = extractVersion(currentJar.getFileName().toString(), configuration.getPrefix());
+					previousVersion = extractVersion(previousJar.getFileName().toString(), configuration.getPrefix());
+				} else {
+					currentVersion = Version.of(currentJar.toFile().getParentFile().getName());
+					previousVersion = Version.of(previousJar.toFile().getParentFile().getName());
+				}
 
 				Version nextVersion = null;
 				if (index + 1 < jars.size()) {
 					Path nextJar = jars.get(index + 1);
-					nextVersion = extractVersion(nextJar.getFileName().toString(), configuration.getPrefix());
+					if (!configuration.isFolderPerVersion()) {
+						nextVersion = extractVersion(nextJar.getFileName().toString(), configuration.getPrefix());
+					} else {
+						nextVersion = Version.of(nextJar.toFile().getParentFile().getName());
+					}
 				}
 				
 				System.out.println("Comparing " + currentJar + " to previous " + previousJar);
@@ -58,27 +63,21 @@ public class JapiAnalyzer {
 				
 				ChangeSet changeSet = new ChangeSet(currentVersion, previousVersion, changes);
 				changeSet.setNextVersion(nextVersion);
-				
 				changeSets.add(changeSet);
-				if (!(++count < configuration.getMaxVersionsToCheck() || configuration.getMaxVersionsToCheck() <= 0)) break;
 			} else {
 				System.out.println("Will skip comparison on first JAR");
 			}
 		}
-		
-		
+
 		ITemplateResolver resolver = new ClassLoaderTemplateResolver();
 		TemplateEngine engine = new TemplateEngine();
 		engine.setTemplateResolver(resolver);
-		
-		Date generationTime = new Date(System.currentTimeMillis());
 
 		Context thContext = new Context();
 		thContext.setVariable("changes", changeSets);
-		Writer writer = new FileWriter("/Users/jasonwjones/Desktop/japi.html");
-		engine.process("templates/index.html", thContext, writer);
-		writer.close();
-		
+		try (Writer writer = new FileWriter(configuration.getOutputFile())) {
+			engine.process("templates/index.html", thContext, writer);
+		}
 		return changeSets;
 	}
 
@@ -87,20 +86,10 @@ public class JapiAnalyzer {
 		comparatorOptions.setIncludeSynthetic(true);
 		comparatorOptions.setNoAnnotations(true);
 		comparatorOptions.setIgnoreMissingClasses(true);
-		//comparatorOptions.set
 		JarArchiveComparator jarArchiveComparator = new JarArchiveComparator(comparatorOptions);
 
 		List<JApiClass> jApiClasses = jarArchiveComparator.compare(oldJar.toFile(), newJar.toFile());
-		
-		//Options options = Options.newDefault();
-		//StdoutOutputGenerator stdoutOutputGenerator = new StdoutOutputGenerator(options, jApiClasses);
-		//String output = stdoutOutputGenerator.generate();
-		//System.out.println(output);
-		//System.exit(0);
-		
-		
-		//jApiClasses.get(0).getMethods().get(0).getAccessModifier().g
-		
+
 		System.out.println("Looking at annotations");
 		for (JApiClass apiClass : jApiClasses) {
 			//if (apiClass.getFullyQualifiedName().equals("com.essbase.api.domain.IEssDomain")) {
@@ -222,22 +211,31 @@ public class JapiAnalyzer {
 	}
 	
 	public List<Path> createOrderedJarList(JapiAnalyzerConfiguration configuration) throws IOException {
-		return Files.list(configuration.getBaseFolder())
-				.filter(e -> e.getFileName().toString().startsWith(configuration.getPrefix()))
-				.sorted(comparator(configuration.getPrefix()))
-				.collect(Collectors.toList());
+		if (!configuration.isFolderPerVersion()) {
+			return Files.list(configuration.getBaseFolder())
+					.filter(e -> e.getFileName().toString().startsWith(configuration.getPrefix()))
+					.sorted(comparator(configuration.getPrefix()))
+					.collect(Collectors.toList());
+		} else {
+			File base = configuration.getBaseFolder().toFile();
+			File[] subDirectories = base.listFiles(File::isDirectory);
+			Arrays.sort(subDirectories, Comparator.comparing(o -> Version.of(o.getName())));
+			List<Path> paths = new ArrayList<>();
+			for (File subdirectory : subDirectories) {
+				File jarFile = new File(subdirectory, configuration.getJarName());
+				paths.add(jarFile.toPath());
+			}
+			return paths;
+		}
 	}
 
 	private static Comparator<Path> comparator(String prefix) {
-		return new Comparator<Path>() {
-			@Override
-			public int compare(Path o1, Path o2) {
-				String s1 = o1.getFileName().toString().substring(prefix.length());
-				String s2 = o2.getFileName().toString().substring(prefix.length());
-				Version v1 = Version.of(s1);
-				Version v2 = Version.of(s2);
-				return v1.compareTo(v2);
-			}
+		return (o1, o2) -> {
+			String s1 = o1.getFileName().toString().substring(prefix.length());
+			String s2 = o2.getFileName().toString().substring(prefix.length());
+			Version v1 = Version.of(s1);
+			Version v2 = Version.of(s2);
+			return v1.compareTo(v2);
 		};
 	}
 

@@ -110,20 +110,16 @@ public class Version implements Comparable<Version> {
 		return components.length;
 	}
 
-	@Override
-	public String toString() {
-		return Arrays.stream(components).mapToObj(e -> Integer.toString(e)).collect(Collectors.joining("."));
-	}
-
 	/**
 	 * Generates a text representation using the original parsed String values.
 	 * This is an alternative method to use when printing when you need leading
 	 * zeros on a version that would otherwise get lost in the conversion to a
 	 * string.
-	 * 
+	 *
 	 * @return text representation of the version, based on original text values
 	 */
-	public String toTextString() {
+	@Override
+	public String toString() {
 		return Arrays.stream(textComponents).collect(Collectors.joining("."));
 	}
 

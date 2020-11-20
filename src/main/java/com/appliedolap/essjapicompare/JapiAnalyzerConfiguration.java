@@ -8,14 +8,34 @@ public class JapiAnalyzerConfiguration {
 
 	private String prefix;
 
-	private int maxVersionsToCheck = 0;
-	
+	private boolean folderPerVersion;
+
+	private String jarName;
+
+	private String outputFile;
+
 	public Path getBaseFolder() {
 		return baseFolder;
 	}
 
 	public void setBaseFolder(Path baseFolder) {
 		this.baseFolder = baseFolder;
+	}
+
+	public boolean isFolderPerVersion() {
+		return folderPerVersion;
+	}
+
+	public void setFolderPerVersion(boolean folderPerVersion) {
+		this.folderPerVersion = folderPerVersion;
+	}
+
+	public String getJarName() {
+		return jarName;
+	}
+
+	public void setJarName(String jarName) {
+		this.jarName = jarName;
 	}
 
 	public String getPrefix() {
@@ -26,12 +46,12 @@ public class JapiAnalyzerConfiguration {
 		this.prefix = prefix;
 	}
 
-	public int getMaxVersionsToCheck() {
-		return maxVersionsToCheck;
+	public String getOutputFile() {
+		return outputFile;
 	}
 
-	public void setMaxVersionsToCheck(int maxVersionsToCheck) {
-		this.maxVersionsToCheck = maxVersionsToCheck;
+	public void setOutputFile(String outputFile) {
+		this.outputFile = outputFile;
 	}
-		
+
 }
