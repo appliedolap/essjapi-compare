@@ -10,3 +10,7 @@ build/
 
 # macOS
 .DS_Store
+
+# Essbase jars are Oracle-licensed and must never be committed. Supply your own
+# collection from a licensed installation; see the README.
+*.jar
