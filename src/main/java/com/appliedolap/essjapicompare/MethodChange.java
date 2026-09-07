@@ -18,30 +18,37 @@ public final class MethodChange {
 
 	private final String returnType;
 
-	private final String shortReturnType;
-
 	private final String signature;
 
 	private final String statusClass;
 
 	MethodChange(String access, String returnType, String signature, String statusClass) {
 		this.access = access;
-		this.returnType = returnType;
+		this.returnType = shorten(returnType);
 		this.signature = signature;
 		this.statusClass = statusClass;
-		this.shortReturnType = shorten(returnType);
 	}
 
 	/**
-	 * Drops the {@code java.lang.} package qualifier, so a return type reads {@code String} rather
-	 * than {@code java.lang.String}.
+	 * Drops the {@code java.lang.} qualifier, so a return type reads {@code String} rather than
+	 * {@code java.lang.String}.
 	 *
-	 * <p>Only the added section has ever done this; the modified and deprecated sections print the
-	 * qualified name. Both forms are offered here rather than quietly settling that inconsistency,
-	 * which is a decision about the report rather than about this refactoring.
+	 * <p>Applied to every section. The added section used to do this and the modified and
+	 * deprecated sections did not, so the same type printed two different ways depending on which
+	 * heading it happened to fall under.
+	 *
+	 * <p>Only a direct member of {@code java.lang} is shortened. A nested package keeps its
+	 * qualifier, because {@code reflect.Method} names nothing - no such package exists at the top
+	 * level. Nothing in the report currently returns such a type, so this costs nothing today and
+	 * is simply the rule the shorter version of this check got wrong.
 	 */
 	private static String shorten(String type) {
-		return type != null && type.startsWith("java.lang") ? type.substring(10) : type;
+		String prefix = "java.lang.";
+		if (type == null || !type.startsWith(prefix)) {
+			return type;
+		}
+		String withoutPackage = type.substring(prefix.length());
+		return withoutPackage.indexOf('.') < 0 ? withoutPackage : type;
 	}
 
 	/** Access modifier, lowercased: {@code public}, {@code protected}. */
@@ -49,15 +56,11 @@ public final class MethodChange {
 		return access;
 	}
 
-	/** Return type, fully qualified. */
+	/** Return type, with the java.lang qualifier dropped where it adds nothing. */
 	public String getReturnType() {
 		return returnType;
 	}
 
-	/** Return type with {@code java.lang.} removed. */
-	public String getShortReturnType() {
-		return shortReturnType;
-	}
 
 	/** The method signature as japicmp renders it, including parameter types. */
 	public String getSignature() {

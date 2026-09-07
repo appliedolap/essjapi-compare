@@ -80,6 +80,18 @@ public class ChangeSet {
 		return ApiChanges.withNewDeprecations(changes);
 	}
 
+	/**
+	 * Whether this comparison found nothing to report. Most Essbase patch releases change no
+	 * public API at all, so around half of these say nothing; the report states that once rather
+	 * than showing four empty headings.
+	 */
+	public boolean getNoChanges() {
+		return getAddedClasses().isEmpty()
+				&& getModifiedClasses().isEmpty()
+				&& getRemovedClasses().isEmpty()
+				&& getClassesWithNewDeprecations().isEmpty();
+	}
+
 	public void setChanges(List<JApiClass> changes) {
 		this.changes = changes;
 	}

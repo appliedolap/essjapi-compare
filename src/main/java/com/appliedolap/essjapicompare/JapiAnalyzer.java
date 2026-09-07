@@ -78,6 +78,15 @@ public class JapiAnalyzer {
 		Context thContext = new Context();
 		thContext.setVariable("changes", changeSets);
 
+		// What the report covers, for the footer. Deliberately no generation timestamp: the
+		// report is regenerated occasionally and committed, and a timestamp would make every
+		// regeneration a diff even when no jar changed. The commit already records when.
+		if (!changeSets.isEmpty()) {
+			thContext.setVariable("jarCount", changeSets.size() + 1);
+			thContext.setVariable("firstVersion", changeSets.get(0).getPreviousVersion());
+			thContext.setVariable("lastVersion", changeSets.get(changeSets.size() - 1).getCurrentVersion());
+		}
+
 		// Explicit UTF-8 rather than the platform default, matching the charset the report
 		// declares in its own meta tag - otherwise the encoding of the output depends on
 		// whichever machine happened to generate it.
