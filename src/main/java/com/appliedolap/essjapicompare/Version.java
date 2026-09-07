@@ -1,22 +1,39 @@
 package com.appliedolap.essjapicompare;
 
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.stream.Collectors;
 
+/**
+ * An Essbase version number, and the ordering between two of them.
+ *
+ * <p>Essbase numbers its releases in a way that defeats most version parsers. The number of
+ * components varies from two to six - 7.1 at one end, 21.8.2.0.0.031 at the other - and patch
+ * components carry leading zeros that matter when displaying a version and not at all when
+ * ordering one. So 11.1.2.4.001 has to print exactly that way, while sorting as though it read 1.
+ *
+ * <p>A shorter version is treated as though padded with zeros, which makes 11.1.2 and 11.1.2.0 the
+ * same version. {@link #equals(Object)} and {@link #hashCode()} agree with that, so the two are
+ * interchangeable in a hashed or sorted collection.
+ *
+ * <p>Instances are immutable.
+ */
 public class Version implements Comparable<Version> {
 
-	private int[] components;
+	/** Numeric components, most significant first, for comparison. */
+	private final int[] components;
 
-	private String[] textComponents;
+	/**
+	 * The components exactly as they were parsed, for display. Kept separately because the
+	 * numeric form loses leading zeros, and those are how Oracle writes a patch set.
+	 */
+	private final String[] textComponents;
 
-	public static final Comparator<Version> COMPARATOR = new Comparator<Version>() {
-		@Override
-		public int compare(Version o1, Version o2) {
-			return o1.compareTo(o2);
-		}
-	};
-
+	/**
+	 * Parses a version from text such as {@code 11.1.2.4.048}.
+	 *
+	 * @param version dot- or underscore-separated numeric components
+	 * @throws IllegalArgumentException if any component is not a number
+	 */
 	public Version(String version) {
 		// splits on a period or an underscore
 		textComponents = version.split("[\\._]");
@@ -32,7 +49,7 @@ public class Version implements Comparable<Version> {
 	}
 
 	/**
-	 * Convenience fluent method or building a new Version object.
+	 * Parses a version from text. Reads better than the constructor at a call site.
 	 * 
 	 * @param versionText the version to parse
 	 * @return a new Version object
@@ -57,22 +74,30 @@ public class Version implements Comparable<Version> {
 		}
 	}
 
+	/** The first component, or zero if there is none. */
 	public int getMajor() {
 		return getComponent(0);
 	}
 
+	/** The second component, or zero if there is none. */
 	public int getMinor() {
 		return getComponent(1);
 	}
 
+	/** The third component, or zero if there is none. */
 	public int getRevision() {
 		return getComponent(2);
 	}
 
+	/** The fourth component, or zero if there is none. */
 	public int getBuild() {
 		return getComponent(3);
 	}
 
+	/**
+	 * One component by position, or zero past the end - which is what makes a shorter version
+	 * compare as though it were padded with zeros.
+	 */
 	private int getComponent(int index) {
 		if (index < components.length) {
 			return components[index];
@@ -105,14 +130,25 @@ public class Version implements Comparable<Version> {
 		return true;
 	}
 
+	/**
+	 * Whether this version is at least the given one.
+	 *
+	 * @param otherVersion the version to compare against
+	 * @return true if this version is the same or higher
+	 */
 	public boolean isGreaterOrEqual(Version otherVersion) {
 		return isGreaterOrEqual(otherVersion.getComponents());
 	}
 
-	public int[] getComponents() {
+	/** The numeric components. Internal: the array is the live one, not a copy. */
+	private int[] getComponents() {
 		return components;
 	}
 
+	/**
+	 * How many components were actually given, as opposed to how many can be read. A version
+	 * built from {@code 9.3} has two, though {@link #getBuild()} will answer zero for it.
+	 */
 	public int getNumComponents() {
 		return components.length;
 	}

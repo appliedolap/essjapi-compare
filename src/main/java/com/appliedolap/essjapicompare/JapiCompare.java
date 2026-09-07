@@ -4,7 +4,19 @@ import java.io.File;
 
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "japicompare")
+@CommandLine.Command(
+		name = "essjapi-compare",
+		mixinStandardHelpOptions = true,
+		versionProvider = JapiCompare.ManifestVersion.class,
+		description = "Compares successive versions of the Essbase Java API client jar and reports "
+				+ "what changed as a single HTML file.")
+/**
+ * Command line entry point.
+ *
+ * <p>Reads a folder of Essbase client jars and writes an HTML report of what changed between
+ * successive versions. Two layouts are understood - a folder per version, or every jar together
+ * with a common filename prefix - and {@code --version-folders} selects the first.
+ */
 public class JapiCompare implements Runnable {
 
 	@CommandLine.Option(names = "--base-folder", description = "The base folder containing jars of folders of jars", required = true)
@@ -22,6 +34,7 @@ public class JapiCompare implements Runnable {
 	@CommandLine.Option(names = "--output-file", description = "Set name of output HTML file", defaultValue = "japi-compare.html")
 	String outputFile;
 
+	/** Builds the configuration from the command line and runs the comparison. */
 	@Override
 	public void run() {
 		try {
@@ -43,6 +56,25 @@ public class JapiCompare implements Runnable {
 		}
 	}
 
+	/**
+	 * Supplies the version banner from the jar's own manifest, rather than from a constant that
+	 * would need updating at every release. Standard help options advertise the flag whether or
+	 * not a version is configured, so without this the flag would print nothing.
+	 */
+	static class ManifestVersion implements CommandLine.IVersionProvider {
+
+		/** @return one line naming the tool and the version recorded in its manifest */
+		@Override
+		public String[] getVersion() {
+			String version = JapiCompare.class.getPackage().getImplementationVersion();
+			return new String[]{"essjapi-compare " + (version != null ? version : "(development build)")};
+		}
+
+	}
+
+	/**
+	 * @param args command line arguments; see {@code --help}
+	 */
 	public static void main(String[] args) {
 		int exitCode = new CommandLine(new JapiCompare()).execute(args);
 		System.exit(exitCode);

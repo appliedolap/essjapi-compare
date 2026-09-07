@@ -25,12 +25,30 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Compares a sequence of Essbase client jars and writes the report.
+ *
+ * <p>Each jar is compared against the one before it, so a run over N jars produces N-1 change
+ * sets; the oldest jar is the baseline and has nothing to be compared against. The result is
+ * rendered through a Thymeleaf template into a single self-contained HTML file.
+ */
 public class JapiAnalyzer {
+
+	/** Creates an analyzer. What to compare is supplied per run. */
+	public JapiAnalyzer() {
+	}
 
 	private static final Logger logger = LoggerFactory.getLogger(JapiAnalyzer.class);
 
 	private static final String JAR_EXTENSION = ".jar";
 
+	/**
+	 * Runs the comparison and writes the report.
+	 *
+	 * @param configuration which jars to read and where to write the result
+	 * @return one change set per comparison, oldest first
+	 * @throws IOException if the jars cannot be listed or the report cannot be written
+	 */
 	public List<ChangeSet> run(JapiAnalyzerConfiguration configuration) throws IOException {
 		List<Path> jars = createOrderedJarList(configuration);
 		logger.info("Comparing {} jars", jars.size());
@@ -105,6 +123,12 @@ public class JapiAnalyzer {
 	 * reference plenty they do not ship, and the report is about the public surface rather than
 	 * about what japicmp could not resolve. Synthetic members are included because japicmp
 	 * classifies some real accessors that way.
+	 *
+	 * @param newJar the newer jar
+	 * @param newVersion the version the newer jar represents
+	 * @param oldJar the older jar
+	 * @param oldVersion the version the older jar represents
+	 * @return every class japicmp reported on
 	 */
 	public List<JApiClass> compare(Path newJar, Version newVersion, Path oldJar, Version oldVersion) {
 		JarArchiveComparatorOptions comparatorOptions = new JarArchiveComparatorOptions();
@@ -125,6 +149,11 @@ public class JapiAnalyzer {
 	 * <p>The extension has to come off as well as the prefix. Without that this produced
 	 * {@code 11.1.2.4.010.jar} and Version rejected it, so the one folder of many jars mode threw
 	 * on the first file it found.
+	 *
+	 * @param filename the jar's filename, including prefix and extension
+	 * @param prefix what precedes the version in that filename
+	 * @return the version the filename names
+	 * @throws IllegalArgumentException if what remains is not a version
 	 */
 	public static Version extractVersion(String filename, String prefix) {
 		String version = filename.substring(prefix.length());
@@ -136,6 +165,17 @@ public class JapiAnalyzer {
 		return Version.of(version);
 	}
 	
+	/**
+	 * Finds the jars to compare and puts them in version order.
+	 *
+	 * <p>Order is everything here: the report describes what changed from one release to the next,
+	 * so the jars have to be sorted by version rather than by filename, which would put
+	 * 11.1.2.4.010 before 11.1.2.4.9.
+	 *
+	 * @param configuration the layout to read, and the prefix or jar name it implies
+	 * @return the jars, oldest version first
+	 * @throws IOException if the folder cannot be read
+	 */
 	public List<Path> createOrderedJarList(JapiAnalyzerConfiguration configuration) throws IOException {
 		if (!configuration.isFolderPerVersion()) {
 			return Files.list(configuration.getBaseFolder())

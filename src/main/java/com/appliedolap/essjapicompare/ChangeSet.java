@@ -15,44 +15,53 @@ import japicmp.model.JApiClass;
  */
 public class ChangeSet {
 
-	private Version previousVersion;
+	private final Version previousVersion;
 
-	private Version currentVersion;
+	private final Version currentVersion;
 
+	/** Filled in after construction: the next version is not known until the one after is read. */
 	private Version nextVersion;
 
-	private List<JApiClass> changes;
+	private final List<JApiClass> changes;
 
+	/**
+	 * Records the outcome of comparing two jars.
+	 *
+	 * @param currentVersion the newer of the two jars compared
+	 * @param previousVersion the older of the two
+	 * @param changes every class japicmp had something to say about
+	 */
 	public ChangeSet(Version currentVersion, Version previousVersion, List<JApiClass> changes) {
 		this.currentVersion = currentVersion;
 		this.previousVersion = previousVersion;
 		this.changes = changes;
 	}
 
+	/** The version this one is compared against. */
 	public Version getPreviousVersion() {
 		return previousVersion;
 	}
 
-	public void setPreviousVersion(Version previousVersion) {
-		this.previousVersion = previousVersion;
-	}
-
+	/** The version this change set describes. */
 	public Version getCurrentVersion() {
 		return currentVersion;
 	}
 
-	public void setCurrentVersion(Version currentVersion) {
-		this.currentVersion = currentVersion;
-	}
-
+	/** The version after this one, or null for the newest jar in the comparison. */
 	public Version getNextVersion() {
 		return nextVersion;
 	}
 
+	/**
+	 * Records the version that follows this one, so the report can link forward as well as back.
+	 *
+	 * @param nextVersion the following version, or null if this is the newest
+	 */
 	public void setNextVersion(Version nextVersion) {
 		this.nextVersion = nextVersion;
 	}
 
+	/** Every class japicmp reported on, whatever happened to it. */
 	public List<JApiClass> getChanges() {
 		return changes;
 	}
@@ -64,18 +73,22 @@ public class ChangeSet {
 	 * had removed - see ApiChanges.
 	 */
 
+	/** Classes that appear in this version and not the previous one. */
 	public List<JApiClass> getAddedClasses() {
 		return ApiChanges.withStatus(changes, JApiChangeStatus.NEW);
 	}
 
+	/** Classes present in both versions whose members changed. */
 	public List<JApiClass> getModifiedClasses() {
 		return ApiChanges.withStatus(changes, JApiChangeStatus.MODIFIED);
 	}
 
+	/** Classes present in the previous version and gone from this one. */
 	public List<JApiClass> getRemovedClasses() {
 		return ApiChanges.withStatus(changes, JApiChangeStatus.REMOVED);
 	}
 
+	/** Classes that gained at least one deprecated method in this version. */
 	public List<JApiClass> getClassesWithNewDeprecations() {
 		return ApiChanges.withNewDeprecations(changes);
 	}
@@ -84,16 +97,14 @@ public class ChangeSet {
 	 * Whether this comparison found nothing to report. Most Essbase patch releases change no
 	 * public API at all, so around half of these say nothing; the report states that once rather
 	 * than showing four empty headings.
+	 *
+	 * @return true if nothing at all changed between these two versions
 	 */
 	public boolean getNoChanges() {
 		return getAddedClasses().isEmpty()
 				&& getModifiedClasses().isEmpty()
 				&& getRemovedClasses().isEmpty()
 				&& getClassesWithNewDeprecations().isEmpty();
-	}
-
-	public void setChanges(List<JApiClass> changes) {
-		this.changes = changes;
 	}
 
 }

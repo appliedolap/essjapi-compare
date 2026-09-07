@@ -23,10 +23,18 @@ import javassist.bytecode.AttributeInfo;
  */
 public final class ApiChanges {
 
+	/** Not instantiable: this is a collection of static queries. */
 	private ApiChanges() {
 	}
 
-	/** Classes whose own status matches, for the report's added/modified/removed sections. */
+	/**
+	 * Selects the classes whose own status matches, for the report's added, modified and removed
+	 * sections.
+	 *
+	 * @param classes every class japicmp reported on
+	 * @param status the status to select
+	 * @return only the classes with that status, in the order given
+	 */
 	public static List<JApiClass> withStatus(List<JApiClass> classes, JApiChangeStatus status) {
 		List<JApiClass> matching = new ArrayList<JApiClass>();
 		for (JApiClass clazz : classes) {
@@ -37,7 +45,12 @@ public final class ApiChanges {
 		return matching;
 	}
 
-	/** Classes that gained at least one deprecation in this comparison. */
+	/**
+	 * Selects the classes that gained at least one deprecation.
+	 *
+	 * @param classes every class japicmp reported on
+	 * @return only the classes with a newly deprecated method, in the order given
+	 */
 	public static List<JApiClass> withNewDeprecations(List<JApiClass> classes) {
 		List<JApiClass> matching = new ArrayList<JApiClass>();
 		for (JApiClass clazz : classes) {
@@ -48,12 +61,22 @@ public final class ApiChanges {
 		return matching;
 	}
 
-	/** Whether a class gained any deprecation in this comparison. */
+	/**
+	 * Whether a class gained any deprecation in this comparison.
+	 *
+	 * @param clazz the class to examine
+	 * @return true if any of its methods became deprecated
+	 */
 	public static boolean classGainedDeprecatedMethods(JApiClass clazz) {
 		return !newlyDeprecatedMethods(clazz).isEmpty();
 	}
 
-	/** Methods of a class that changed in some way; the unchanged majority is not reported. */
+	/**
+	 * Selects the methods of a class that changed, which in most classes is a small minority.
+	 *
+	 * @param clazz the class to examine
+	 * @return the changed methods, ready to render
+	 */
 	public static List<MethodChange> changedMethods(JApiClass clazz) {
 		List<MethodChange> changed = new ArrayList<MethodChange>();
 		for (JApiMethod method : clazz.getMethods()) {
@@ -64,7 +87,12 @@ public final class ApiChanges {
 		return changed;
 	}
 
-	/** Methods of a class that became deprecated in this comparison. */
+	/**
+	 * Selects the methods of a class that became deprecated in this comparison.
+	 *
+	 * @param clazz the class to examine
+	 * @return the newly deprecated methods, ready to render
+	 */
 	public static List<MethodChange> newlyDeprecatedMethods(JApiClass clazz) {
 		List<MethodChange> deprecated = new ArrayList<MethodChange>();
 		for (JApiMethod method : clazz.getMethods()) {
@@ -119,6 +147,9 @@ public final class ApiChanges {
 	 *
 	 * <p>japicmp reports annotations as attributes rather than as a change status of their own, so
 	 * this reads the bytecode attribute directly on both sides of the comparison.
+	 *
+	 * @param method the method to examine
+	 * @return true if it is deprecated now and was not before
 	 */
 	public static boolean isMethodNowDeprecated(JApiMethod method) {
 		String attribute = "Deprecated";
