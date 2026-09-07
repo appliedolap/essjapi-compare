@@ -2,9 +2,9 @@ package com.appliedolap.essjapicompare;
 
 import japicmp.cmp.JarArchiveComparator;
 import japicmp.cmp.JarArchiveComparatorOptions;
-import japicmp.model.JApiChangeStatus;
 import japicmp.model.JApiClass;
-import japicmp.model.JApiMethod;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
@@ -26,11 +26,13 @@ import java.util.stream.Collectors;
 
 public class JapiAnalyzer {
 
+	private static final Logger logger = LoggerFactory.getLogger(JapiAnalyzer.class);
+
+	private static final String JAR_EXTENSION = ".jar";
+
 	public List<ChangeSet> run(JapiAnalyzerConfiguration configuration) throws IOException {
 		List<Path> jars = createOrderedJarList(configuration);
-		for (Path jar : jars) {
-			System.out.println(jar);
-		}
+		logger.info("Comparing {} jars", jars.size());
 		
 		List<ChangeSet> changeSets = new ArrayList<ChangeSet>();
 		
@@ -38,7 +40,6 @@ public class JapiAnalyzer {
 			Path currentJar = jars.get(index);
 			Path previousJar = index > 0 ? jars.get(index - 1) : null;
 						
-			System.out.println("JAR: " + currentJar.toAbsolutePath() + ", prev: " + previousJar);
 			if (previousJar != null) {
 				Version currentVersion;
 				Version previousVersion;
@@ -60,14 +61,13 @@ public class JapiAnalyzer {
 					}
 				}
 				
-				System.out.println("Comparing " + currentJar + " to previous " + previousJar);
 				List<JApiClass> changes = compare(currentJar, previousJar);
 				
 				ChangeSet changeSet = new ChangeSet(currentVersion, previousVersion, changes);
 				changeSet.setNextVersion(nextVersion);
 				changeSets.add(changeSet);
 			} else {
-				System.out.println("Will skip comparison on first JAR");
+				logger.debug("{} is the baseline; nothing to compare it against", currentJar.getFileName());
 			}
 		}
 
@@ -97,133 +97,40 @@ public class JapiAnalyzer {
 		return changeSets;
 	}
 
+	/**
+	 * Compares two jars and returns every class japicmp has something to say about.
+	 *
+	 * <p>Annotations are switched off and missing classes ignored: the Essbase client jars
+	 * reference plenty they do not ship, and the report is about the public surface rather than
+	 * about what japicmp could not resolve. Synthetic members are included because japicmp
+	 * classifies some real accessors that way.
+	 */
 	public List<JApiClass> compare(Path newJar, Path oldJar) {
 		JarArchiveComparatorOptions comparatorOptions = new JarArchiveComparatorOptions();
 		comparatorOptions.setIncludeSynthetic(true);
 		comparatorOptions.setNoAnnotations(true);
 		comparatorOptions.setIgnoreMissingClasses(true);
-		JarArchiveComparator jarArchiveComparator = new JarArchiveComparator(comparatorOptions);
 
-		List<JApiClass> jApiClasses = jarArchiveComparator.compare(oldJar.toFile(), newJar.toFile());
-
-		System.out.println("Looking at annotations");
-		for (JApiClass apiClass : jApiClasses) {
-			//if (apiClass.getFullyQualifiedName().equals("com.essbase.api.domain.IEssDomain")) {
-				for (JApiMethod method : apiClass.getMethods()) {
-					//if (method.getName().equals("getUser")) {
-						if (ApiChanges.isMethodNowDeprecated(method)) {
-							System.out.println("Deprecated method: " + apiClass.getFullyQualifiedName() + "." + method.getName());							
-						}
-						if (method.getChangeStatus().equals(JApiChangeStatus.NEW)) {
-							System.out.println("New method: " + apiClass.getFullyQualifiedName() + "." + method.getName());
-						}
-						/*
-						System.out.println("Checking " + apiClass.getFullyQualifiedName() + "#" + method.getName());
-						for (JApiAttribute<? extends Enum<?>> attr : method.getAttributes()) {
-							System.out.println("Attrib: " + attr.getNewValue());
-						}
-						for (JApiModifier<? extends Enum<? extends Enum<?>>> mod : method.getModifiers()) {
-							System.out.println("Modifier: " + mod.getValueNew());
-						}
-						
-						for (JApiAnnotation annotation : method.getAnnotations()) {
-							System.out.println("New annotation on class: " + apiClass.getFullyQualifiedName() + ": " + annotation.getNewAnnotation().get());
-						}
-						*/
-					}
-				//}
-//			}
-			
-		}
-		
-		return jApiClasses;
-		
-//		
-//		for (JApiClass apiClass : jApiClasses) {
-//			// new classes
-//			switch (apiClass.getChangeStatus()) {
-//			case MODIFIED:
-//				System.out.println("Modified class: " + apiClass.getFullyQualifiedName());
-//				break;
-//			case NEW:
-//				System.out.println("New class: " + apiClass.getFullyQualifiedName());
-//				System.out.println("Access: " + apiClass.getAccessModifier().getValueNew());
-//				break;
-//			case REMOVED:
-//				System.out.println("Removed class: " + apiClass.getFullyQualifiedName());
-//				break;
-//			case UNCHANGED:
-//			default:
-//				break;
-//			
-//			}
-//			/*
-//			if (apiClass.getChangeStatus().equals(JApiChangeStatus.NEW)) {
-//				if (apiClass.getAccessModifier().getNewModifier().get().equals(AccessModifier.PUBLIC)) {
-//					System.out.println("New class: " + apiClass.getFullyQualifiedName());
-//					System.out.println("Access: " + apiClass.getAccessModifier().getValueNew());
-//				}
-//			}
-//			*/
-//
-//			/*
-//			if (apiClass.getChangeStatus().equals(JApiChangeStatus.REMOVED)) {
-//				System.out.println("Removed class: " + apiClass.getFullyQualifiedName());
-//				System.exit(0);
-//			}
-//			*/
-//			
-//			for (JApiMethod method : apiClass.getMethods()) {
-//				switch (method.getChangeStatus()) {
-//				case MODIFIED:
-//					System.out.println("Modified method: " + method.getName());
-//					break;
-//				case NEW:
-//					System.out.println("New method: " + method.getName());
-//					break;
-//				case REMOVED:
-//					System.out.println("Removed method: " + method.getName());
-//					break;
-//				case UNCHANGED:
-//				default:
-//					break;
-//				}
-//			}
-//			
-//		}
-//		System.out.println();
-//		
-//		// List<JApiMethod> changes = new ArrayList<JApiMethod>();
-//		// Map<JApiClass, List<JApiMethod>> changes = new HashMap<JApiClass,
-//		// List<JApiMethod>>();
-//		Multimap<JApiClass, JApiMethod> changes = ArrayListMultimap.create();
-//
-//		// System.out.println(jApiClasses.size());
-//		/*
-//		for (JApiClass apiClass : jApiClasses) {
-//			// System.out.println(apiClass.getClassType().getNewType());
-//			if (apiClass.getClassType().getNewType().equals("CLASS")) {
-//				// if (apiClass.getClassType().getNewType().equals("INTERFACE"))
-//				// {
-//				// System.out.println(apiClass.getFullyQualifiedName());
-//				for (JApiMethod method : apiClass.getMethods()) {
-//					if (!method.getChangeStatus().equals(JApiChangeStatus.UNCHANGED)) {
-//						changes.put(apiClass, method);
-//						// System.out.println("\t" + method.getName() + " --> "
-//						// + method.getChangeStatus().toString());
-//					}
-//				}
-//			}
-//		}
-//		*/
-//		//new EssJapiChangePrinter().print(changes);
-
-		
-		
+		logger.debug("Comparing {} against {}", newJar.getFileName(), oldJar.getFileName());
+		return new JarArchiveComparator(comparatorOptions).compare(oldJar.toFile(), newJar.toFile());
 	}
 
+	/**
+	 * Reads the version out of a filename like {@code ess_japi-11.1.2.4.010.jar}, given the part
+	 * that comes before it.
+	 *
+	 * <p>The extension has to come off as well as the prefix. Without that this produced
+	 * {@code 11.1.2.4.010.jar} and Version rejected it, so the one folder of many jars mode threw
+	 * on the first file it found.
+	 */
 	public static Version extractVersion(String filename, String prefix) {
-		return Version.of(filename.substring(prefix.length()));
+		String version = filename.substring(prefix.length());
+		// The known extension specifically, not everything after the last dot: a version is
+		// itself dotted, so trimming at the last dot turns 9.3.1 into 9.3.
+		if (version.toLowerCase().endsWith(JAR_EXTENSION)) {
+			version = version.substring(0, version.length() - JAR_EXTENSION.length());
+		}
+		return Version.of(version);
 	}
 	
 	public List<Path> createOrderedJarList(JapiAnalyzerConfiguration configuration) throws IOException {
@@ -245,14 +152,15 @@ public class JapiAnalyzer {
 		}
 	}
 
+	/**
+	 * Orders jars in a single folder by the version in their filename.
+	 *
+	 * <p>Delegates to {@link #extractVersion(String, String)} rather than parsing the name again.
+	 * It used to do its own parsing and, like the original of that method, left the extension on -
+	 * so sorting threw before the comparison could even start.
+	 */
 	private static Comparator<Path> comparator(String prefix) {
-		return (o1, o2) -> {
-			String s1 = o1.getFileName().toString().substring(prefix.length());
-			String s2 = o2.getFileName().toString().substring(prefix.length());
-			Version v1 = Version.of(s1);
-			Version v2 = Version.of(s2);
-			return v1.compareTo(v2);
-		};
+		return Comparator.comparing(jar -> extractVersion(jar.getFileName().toString(), prefix));
 	}
 
 }

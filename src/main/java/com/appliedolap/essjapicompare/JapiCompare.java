@@ -1,22 +1,7 @@
 package com.appliedolap.essjapicompare;
 
 import java.io.File;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
-
-import japicmp.cmp.JarArchiveComparator;
-import japicmp.cmp.JarArchiveComparatorOptions;
-import japicmp.model.JApiChangeStatus;
-import japicmp.model.JApiClass;
-import japicmp.model.JApiMethod;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "japicompare")
@@ -31,6 +16,9 @@ public class JapiCompare implements Runnable {
 	@CommandLine.Option(names = "--version-folders", description = "Set to true if jars are in folders with a version number")
 	boolean baseFolderPerVersion;
 
+	@CommandLine.Option(names = "--prefix", description = "Filename prefix before the version, when jars sit in one folder (default: ${DEFAULT-VALUE})", defaultValue = "ess_japi-")
+	String prefix;
+
 	@CommandLine.Option(names = "--output-file", description = "Set name of output HTML file", defaultValue = "japi-compare.html")
 	String outputFile;
 
@@ -43,6 +31,10 @@ public class JapiCompare implements Runnable {
 			configuration.setOutputFile(outputFile);
 			if (baseFolderPerVersion) {
 				configuration.setJarName(jarName);
+			} else {
+				// Without this the flat-folder mode dereferenced a null prefix and threw. There
+				// was no option to supply one, so that mode could never have run at all.
+				configuration.setPrefix(prefix);
 			}
 			JapiAnalyzer japiAnalyzer = new JapiAnalyzer();
 			japiAnalyzer.run(configuration);
