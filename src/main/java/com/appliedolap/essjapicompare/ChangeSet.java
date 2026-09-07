@@ -2,6 +2,7 @@ package com.appliedolap.essjapicompare;
 
 import java.util.List;
 
+import japicmp.model.JApiChangeStatus;
 import japicmp.model.JApiClass;
 
 /**
@@ -54,6 +55,29 @@ public class ChangeSet {
 
 	public List<JApiClass> getChanges() {
 		return changes;
+	}
+
+	/*
+	 * The four views of this change set that the report actually renders. The template used to
+	 * iterate getChanges() four times over and discard everything that did not belong in the
+	 * section it was building, which left Thymeleaf emitting the indentation of every element it
+	 * had removed - see ApiChanges.
+	 */
+
+	public List<JApiClass> getAddedClasses() {
+		return ApiChanges.withStatus(changes, JApiChangeStatus.NEW);
+	}
+
+	public List<JApiClass> getModifiedClasses() {
+		return ApiChanges.withStatus(changes, JApiChangeStatus.MODIFIED);
+	}
+
+	public List<JApiClass> getRemovedClasses() {
+		return ApiChanges.withStatus(changes, JApiChangeStatus.REMOVED);
+	}
+
+	public List<JApiClass> getClassesWithNewDeprecations() {
+		return ApiChanges.withNewDeprecations(changes);
 	}
 
 	public void setChanges(List<JApiClass> changes) {

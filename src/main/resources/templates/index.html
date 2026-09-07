@@ -170,7 +170,7 @@
 					<td>Added</td>
 					<td>
 						<ul class="class-list">
-							<li th:each="clazz : ${change.changes}" th:if="${clazz.changeStatus.name()} == 'NEW'">
+							<li th:each="clazz : ${change.addedClasses}">
 								<strong>
 									<span th:text="${clazz.accessModifier.valueNew.toLowerCase()}">public/private</span>
 									<span th:text="${clazz.classType.newType.toLowerCase()}">class type</span>
@@ -178,7 +178,7 @@
 								</strong> 
 								 
 								<ul class="method-list">
-									<li th:each="method : ${clazz.methods}" th:if="${method.changeStatus.name()} != 'UNCHANGED'">
+									<li th:each="method : ${@com.appliedolap.essjapicompare.ApiChanges@changedMethods(clazz)}">
 										<span th:text="${method.accessModifier.valueNew.toLowerCase()}"></span>
 										<span th:text="${method.returnType.newReturnType.startsWith('java.lang')} ? ${method.returnType.newReturnType.substring(10)} : ${method.returnType.newReturnType}">method name</span> 
 										<span th:text="${method.newMethod.get().longName}">method name</span>
@@ -192,20 +192,32 @@
 			 		<td>Modified</td>
 					<td>
 						<ul class="class-list">
-							<li th:each="clazz : ${change.changes}" th:if="${clazz.changeStatus.name()} == 'MODIFIED'">
+							<li th:each="clazz : ${change.modifiedClasses}">
 								<strong>
 									<span th:text="${clazz.accessModifier.valueNew.toLowerCase()}">public/private</span>
 									<span th:text="${clazz.classType.newType.toLowerCase()}">class type</span>
 									<span th:text="${clazz.fullyQualifiedName}" th:class="${clazz.classType.newType}">class name</span>
 								</strong> 
 								<ul class="method-list">
-									<li th:each="method : ${clazz.methods}" th:if="${method.changeStatus.name()} != 'UNCHANGED'"> 
-										<span th:if="${method.changeStatus.name()} == 'NEW'" th:text="${method.accessModifier.valueNew.toLowerCase()}"></span>
-										<span th:if="${method.changeStatus.name()} == 'REMOVED'" th:text="${method.accessModifier.valueOld.toLowerCase()}"></span>
-										<span th:if="${method.changeStatus.name()} == 'NEW'" th:text="${method.returnType.newReturnType}">return type</span> 
-										<span th:if="${method.changeStatus.name()} == 'REMOVED'" th:text="${method.returnType.oldReturnType}">return type</span>
-										<span th:if="${method.changeStatus.name()} == 'NEW'" th:class="'method-' + ${method.changeStatus.name().toLowerCase()}" th:text="${method.newMethod.get().longName}">method name</span>
-										<span th:if="${method.changeStatus.name()} == 'REMOVED'" th:class="'method-' + ${method.changeStatus.name().toLowerCase()}" th:text="${method.oldMethod.get().longName}">old method name</span>
+									<li th:each="method : ${@com.appliedolap.essjapicompare.ApiChanges@changedMethods(clazz)}"> 
+										<!--/* A method in a modified class was either added or removed, and which
+										       one decides whether the new or the old side of the comparison is read.
+										       Grouped rather than six separately-conditional spans, since each span
+										       Thymeleaf removes still costs a line of indentation in the output.
+
+										       Parser-level comment syntax, not an HTML comment: this sits inside the
+										       per-method loop, so an HTML comment here would be copied into the
+										       output once for every method in the report. */-->
+										<th:block th:if="${method.changeStatus.name()} == 'NEW'">
+											<span th:text="${method.accessModifier.valueNew.toLowerCase()}"></span>
+											<span th:text="${method.returnType.newReturnType}">return type</span>
+											<span th:class="'method-' + ${method.changeStatus.name().toLowerCase()}" th:text="${method.newMethod.get().longName}">method name</span>
+										</th:block>
+										<th:block th:if="${method.changeStatus.name()} == 'REMOVED'">
+											<span th:text="${method.accessModifier.valueOld.toLowerCase()}"></span>
+											<span th:text="${method.returnType.oldReturnType}">return type</span>
+											<span th:class="'method-' + ${method.changeStatus.name().toLowerCase()}" th:text="${method.oldMethod.get().longName}">old method name</span>
+										</th:block>
 									</li>
 								</ul>
 							</li>
@@ -217,7 +229,7 @@
 					</td>
 					<td>
 						<ul>
-							<li th:each="clazz : ${change.changes}" th:if="${clazz.changeStatus.name()} == 'REMOVED'" th:text="${clazz.fullyQualifiedName}">class name</li>
+							<li th:each="clazz : ${change.removedClasses}" th:text="${clazz.fullyQualifiedName}">class name</li>
 						</ul>
 					</td>
 				</tr>
@@ -225,10 +237,10 @@
 					<td>Deprecated</td>
 					<td>
 						<ul class="class-list">
-							<li th:each="clazz : ${change.changes}" th:if="${@com.appliedolap.essjapicompare.ApiChanges@classGainedDeprecatedMethods(clazz)}">
+							<li th:each="clazz : ${change.classesWithNewDeprecations}">
 								<span th:text="${clazz.fullyQualifiedName}">class name</span>
 								<ul class="method-list">
-									<li th:each="method : ${clazz.methods}" th:if="${@com.appliedolap.essjapicompare.ApiChanges@isMethodNowDeprecated(method)}">
+									<li th:each="method : ${@com.appliedolap.essjapicompare.ApiChanges@newlyDeprecatedMethods(clazz)}">
 										<span th:text="${method.accessModifier.valueNew.toLowerCase()}"></span>
 										<span th:text="${method.returnType.newReturnType}">return type</span> 
 										<span class="method-deprecated" th:text="${method.newMethod.get().longName}">method name</span>
