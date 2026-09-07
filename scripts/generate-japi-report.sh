@@ -29,6 +29,7 @@ OUTPUT_FILE="$PROJECT_ROOT/build/essbase-java-api-evolution/index.html"
 STAGING_DIR=""
 KEEP_STAGING=0
 DRY_RUN=0
+ONLY=""
 
 usage() {
 	cat <<'USAGE'
@@ -43,6 +44,10 @@ Options:
   -s, --staging DIR      Staging directory to build (default: a temp dir)
   -k, --keep-staging     Do not delete the staging directory on exit
   -n, --dry-run          Stage and report coverage, but do not generate
+      --only LIST        Comma-separated version numbers to include, ignoring the rest.
+                         Comparing 117 jars takes seconds; when the change being made is to
+                         the template rather than the analysis, a handful is enough and the
+                         loop gets far tighter.
   -h, --help             Show this help
 
 Sources are merged in the order given; if two sources supply the same version,
@@ -57,6 +62,9 @@ Examples:
 
   # See what coverage you'd get without doing the work
   scripts/generate-japi-report.sh --dry-run /path/to/jars
+
+  # A quick subset while iterating on the template
+  scripts/generate-japi-report.sh --only 9.3.0,9.3.3,11.1.2,21.8.2.0.0.031 /path/to/jars
 USAGE
 }
 
@@ -69,6 +77,7 @@ while [ $# -gt 0 ]; do
 		-s|--staging)      STAGING_DIR="$2"; shift 2 ;;
 		-k|--keep-staging) KEEP_STAGING=1; shift ;;
 		-n|--dry-run)      DRY_RUN=1; shift ;;
+		--only)            ONLY=",$2,"; shift 2 ;;
 		-h|--help)         usage; exit 0 ;;
 		-*)                echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
 		*)                 SOURCES+=("$1"); shift ;;
@@ -162,6 +171,10 @@ for src in "${SOURCES[@]}"; do
 		# or underscores; anything else would abort the whole run.
 		if ! [[ "$version" =~ ^[0-9]+([._][0-9]+)*$ ]]; then
 			skipped_not_version=$((skipped_not_version + 1))
+			continue
+		fi
+
+		if [ -n "$ONLY" ] && [ "${ONLY#*,"$version",}" = "$ONLY" ]; then
 			continue
 		fi
 
