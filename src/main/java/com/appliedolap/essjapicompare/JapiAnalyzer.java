@@ -1,5 +1,6 @@
 package com.appliedolap.essjapicompare;
 
+import japicmp.cmp.JApiCmpArchive;
 import japicmp.cmp.JarArchiveComparator;
 import japicmp.cmp.JarArchiveComparatorOptions;
 import japicmp.model.JApiClass;
@@ -61,7 +62,7 @@ public class JapiAnalyzer {
 					}
 				}
 				
-				List<JApiClass> changes = compare(currentJar, previousJar);
+				List<JApiClass> changes = compare(currentJar, currentVersion, previousJar, previousVersion);
 				
 				ChangeSet changeSet = new ChangeSet(currentVersion, previousVersion, changes);
 				changeSet.setNextVersion(nextVersion);
@@ -105,14 +106,16 @@ public class JapiAnalyzer {
 	 * about what japicmp could not resolve. Synthetic members are included because japicmp
 	 * classifies some real accessors that way.
 	 */
-	public List<JApiClass> compare(Path newJar, Path oldJar) {
+	public List<JApiClass> compare(Path newJar, Version newVersion, Path oldJar, Version oldVersion) {
 		JarArchiveComparatorOptions comparatorOptions = new JarArchiveComparatorOptions();
 		comparatorOptions.setIncludeSynthetic(true);
 		comparatorOptions.setNoAnnotations(true);
-		comparatorOptions.setIgnoreMissingClasses(true);
+		comparatorOptions.getIgnoreMissingClasses().setIgnoreAllMissingClasses(true);
 
-		logger.debug("Comparing {} against {}", newJar.getFileName(), oldJar.getFileName());
-		return new JarArchiveComparator(comparatorOptions).compare(oldJar.toFile(), newJar.toFile());
+		logger.debug("Comparing {} against {}", newVersion, oldVersion);
+		return new JarArchiveComparator(comparatorOptions).compare(
+				new JApiCmpArchive(oldJar.toFile(), oldVersion.toString()),
+				new JApiCmpArchive(newJar.toFile(), newVersion.toString()));
 	}
 
 	/**

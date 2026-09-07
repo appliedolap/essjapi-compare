@@ -2,8 +2,7 @@ package com.appliedolap.essjapicompare;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import com.google.common.base.Optional;
+import java.util.Optional;
 
 import japicmp.model.JApiChangeStatus;
 import japicmp.model.JApiClass;
