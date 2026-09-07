@@ -4,3 +4,9 @@
 .settings
 target
 *.iml
+
+# generated report output
+build/
+
+# macOS
+.DS_Store

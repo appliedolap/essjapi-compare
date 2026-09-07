@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The report generator writes its own progress to stdout; library logging is
+  kept at WARN so a run over 50+ jars stays readable. Raise a specific logger
+  here when debugging template or comparison problems.
+-->
+<configuration>
+	<appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
+		<target>System.err</target>
+		<encoder>
+			<pattern>%-5level %logger{20} - %msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<root level="WARN">
+		<appender-ref ref="STDERR" />
+	</root>
+</configuration>
