@@ -11,9 +11,12 @@ import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import org.thymeleaf.templateresolver.ITemplateResolver;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -75,10 +78,33 @@ public class JapiAnalyzer {
 
 		Context thContext = new Context();
 		thContext.setVariable("changes", changeSets);
-		try (Writer writer = new FileWriter(configuration.getOutputFile())) {
+		thContext.setVariable("stylesheet", readVendoredStylesheet());
+
+		// Explicit UTF-8 rather than the platform default: the report is a single self-contained
+		// file that carries the stylesheet inline, and that stylesheet is UTF-8 with non-ASCII
+		// characters in its own license banner.
+		try (Writer writer = new OutputStreamWriter(
+				new FileOutputStream(configuration.getOutputFile()), StandardCharsets.UTF_8)) {
 			engine.process("templates/index.html", thContext, writer);
 		}
 		return changeSets;
+	}
+
+	/**
+	 * The vendored Pico CSS, inlined into the report rather than linked.
+	 *
+	 * <p>The report is meant to stay readable for years with no maintenance, and it used to depend
+	 * on a stylesheet from a third-party CDN - one outage or one retired URL away from losing its
+	 * formatting silently. Inlining costs about 83 KB in a file already measured in megabytes, and
+	 * leaves the output with no external dependencies at all.
+	 */
+	private String readVendoredStylesheet() throws IOException {
+		try (InputStream in = getClass().getResourceAsStream("/pico.min.css")) {
+			if (in == null) {
+				throw new IOException("pico.min.css is missing from the classpath");
+			}
+			return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+		}
 	}
 
 	public List<JApiClass> compare(Path newJar, Path oldJar) {

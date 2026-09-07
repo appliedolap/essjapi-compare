@@ -4,59 +4,120 @@
 	<title>Essbase Java API Evolution</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<style type="text/css">
 
-		ul.class-list {
+	<!-- Pico CSS, vendored and inlined by JapiAnalyzer so this file has no external
+	     dependencies. Pico is classless, so the markup below is plain semantic HTML. -->
+	<style th:utext="${stylesheet}"></style>
+
+	<style type="text/css">
+		/* Everything below is specific to this report. Kept deliberately small: if a rule can be
+		   expressed by using the right element instead, it should be. Colours come from Pico's own
+		   custom properties, which are already defined for both light and dark themes - hard-coded
+		   green and red would fail against a dark background. */
+
+		/* Pico sets a 125% root font size, which is welcome for the prose above but wrong for
+		   the table below: that table is almost the whole document - 116 versions, five rows
+		   each - and at Pico's default scale it made the page half again as tall. It gets its
+		   own smaller scale instead of shrinking the page's readable text. */
+		table {
+			font-size: 0.7rem;
+		}
+		th, td {
+			padding: 0.2rem 0.45rem;
+			vertical-align: top;
+		}
+
+		/* Pico styles figure as a plain block, so the horizontal scroll for a wide table is ours. */
+		figure {
+			overflow-x: auto;
+		}
+
+		/* The banner row introducing each version. Pico's stripe colour is far too faint to
+		   carry this - it is a 4%-opacity wash - so this uses a real surface colour, which is
+		   defined for both themes. */
+		tr.version-row > td {
+			background: var(--pico-card-sectioning-background-color);
+			border-top: 3px solid var(--pico-primary);
+			font-weight: bold;
+			font-size: 0.8rem;
+		}
+
+		/* Class and member lists: structural, not decorative - no bullets, tight indent. */
+		ul.class-list,
+		ul.method-list {
 			list-style: none;
+			margin: 0;
 			padding-left: 0;
 		}
 		ul.method-list {
-			list-style: none;
 			padding-left: 1em;
 		}
-		.version-row {
-			background-color: #eee;
+		/* Pico gives every list item a bottom margin. That is right for prose, but this report
+		   has over five thousand of them, and at 5px each it added some 26,000px to the page -
+		   most of the difference between this and the previous stylesheet. */
+		ul.class-list li,
+		ul.method-list li {
+			/* list-style has to be set here, not on the ul: Pico puts list-style-type on the li
+			   itself, and a value set on the item beats the one it would inherit from the list. */
+			list-style: none;
+			margin-bottom: 0;
 		}
-		.method-new {
-			color: green;
+
+		/* Separate one class from the next; nothing between the members within a class. */
+		ul.class-list > li + li {
+			margin-top: 0.6em;
 		}
-		.method-removed {
-			color: red;
-		}
-		.method-modified {
-			color: gray;
-		}
-		.method-deprecated {
-			color: gray;
-			text-decoration: line-through;
-		}
-		.comma-list {
-			padding-left: 0;
+
+		/* The version index reads as prose, not as a list. */
+		ul.comma-list {
 			display: inline;
 			list-style: none;
+			margin: 0;
+			padding-left: 0;
 		}
-		.comma-list li {
+		ul.comma-list li {
 			display: inline;
 		}
-		.comma-list li:after {
+		ul.comma-list li:after {
 			content: ", ";
 		}
-		.comma-list li:last-child:after  {
+		ul.comma-list li:last-child:after {
 			content: "";
 		}
+
+		/* Added and removed map onto Pico's ins/del colours, which is what they mean. */
+		.method-new {
+			color: var(--pico-ins-color);
+		}
+		.method-removed {
+			color: var(--pico-del-color);
+		}
+		.method-deprecated {
+			color: var(--pico-muted-color);
+			text-decoration: line-through;
+		}
+
+		/* Fully-qualified type names are code, and long. These class names come straight from
+		   japicmp's class-type enum, so all four possible values are covered - the report emits
+		   ENUM today as well as CLASS and INTERFACE. */
+		.CLASS,
+		.INTERFACE,
+		.ENUM,
+		.ANNOTATION {
+			font-family: var(--pico-font-family-monospace);
+		}
 	</style>
-	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" rel="stylesheet"/>
 </head>
-<body style="font-size: 10pt;">
+<body>
 	
-	<div class="jumbotron">
-		<div class="container-fluid">
-			<h1 class="display-3">Essbase Java API Evolution</h1>
+	<header class="container">
+		<hgroup>
+			<h1>Essbase Java API Evolution</h1>
 			<p>Changes to classes, interfaces, methods, and more in the Essbase Java API over time</p>
-		</div>
-	</div>
-	
-	<div class="table-responsive container-fluid">
+		</hgroup>
+	</header>
+
+	<main class="container">
 		<h2>Reading this table</h2>
 		<p>For each version of the JAR, there are several sections: added, modified, removed, and deprecated. The added section lists classes/interfaces that have been added that were not present in the previous version of the jar. Public methods for each class are also listed (since they are also new by definition). The modified section lists classes/interfaces that have been modified in some way, typically because a method in that object has been added, removed, or changed (new arguments, return type, or some other change). The removed section lists objects that have been removed. Lastly, the deprecated section lists objects and their methods that have been marked as deprecated).</p>
 		<p>Note that the change analyzer lists both base classes (such as <code>EssCube</code> as well as the more commonly used interface object for the corresponding class (such as <code>IEssCube</code>). Typically in the Essbase Java API, all operations are performed with interfaces. While you typically shouldn't program with the base classes, they are in fact public and are occasionally used.</p>
@@ -69,7 +130,8 @@
 		
 		<p></p>
 		
-		<table class="table table-bordered table-sm">
+		<figure>
+		<table>
 			<caption>Overiew of Essbase Java API changes as observed in client JAPI JARs</caption>
 			<thead>
 				<tr>
@@ -171,8 +233,9 @@
 				</th:block>
 			</tbody>
 		</table>
+		</figure>
 
-	</div>
+	</main>
 
 </body>
 </html>
