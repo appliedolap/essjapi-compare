@@ -117,13 +117,11 @@
 			text-decoration: line-through;
 		}
 
-		/* Fully-qualified type names are code, and long. These class names come straight from
-		   japicmp's class-type enum, so all four possible values are covered - the report emits
-		   ENUM today as well as CLASS and INTERFACE. */
-		.CLASS,
-		.INTERFACE,
-		.ENUM,
-		.ANNOTATION {
+		/* Fully-qualified type names are code, and long. One selector rather than one per
+		   japicmp class-type value: every type is rendered the same way. The type itself is
+		   still on the element, as type-class / type-interface / type-enum / type-annotation,
+		   for the day one of them wants distinguishing. */
+		.type-name {
 			font-family: var(--pico-font-family-monospace);
 		}
 	</style>
@@ -181,7 +179,7 @@
 								<strong>
 									<span th:text="${clazz.accessModifier.valueNew.toLowerCase()}">public/private</span>
 									<span th:text="${clazz.classType.newType.toLowerCase()}">class type</span>
-									<span th:id="'v' + ${change.currentVersion} + '_added_' + ${clazz.fullyQualifiedName}" th:text="${clazz.fullyQualifiedName}" th:class="${clazz.classType.newType}">class name</span>
+									<span th:id="'v' + ${change.currentVersion} + '_added_' + ${clazz.fullyQualifiedName}" th:text="${clazz.fullyQualifiedName}" th:class="'type-name type-' + ${clazz.classType.newType.toLowerCase()}">class name</span>
 								</strong> 
 								 
 								<ul class="method-list">
@@ -203,7 +201,7 @@
 								<strong>
 									<span th:text="${clazz.accessModifier.valueNew.toLowerCase()}">public/private</span>
 									<span th:text="${clazz.classType.newType.toLowerCase()}">class type</span>
-									<span th:text="${clazz.fullyQualifiedName}" th:class="${clazz.classType.newType}">class name</span>
+									<span th:text="${clazz.fullyQualifiedName}" th:class="'type-name type-' + ${clazz.classType.newType.toLowerCase()}">class name</span>
 								</strong> 
 								<ul class="method-list">
 									<li th:each="method : ${@com.appliedolap.essjapicompare.ApiChanges@changedMethods(clazz)}"> 
