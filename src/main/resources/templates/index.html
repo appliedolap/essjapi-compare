@@ -41,6 +41,17 @@
 			overflow-x: auto;
 		}
 
+		/* Version number on the left, jump-to-top on the right. Previously two floated divs at
+		   50% each, which never cleared and could not wrap; flex does both and needs one element
+		   rather than two. */
+		.version-heading {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: baseline;
+			justify-content: space-between;
+			gap: 0.25rem 1rem;
+		}
+
 		/* The banner row introducing each version. Pico's stripe colour is far too faint to
 		   carry this - it is a 4%-opacity wash - so this uses a real surface colour, which is
 		   defined for both themes. */
@@ -136,12 +147,10 @@
 		<ul class="comma-list">
 			<li th:each="change : ${changes}"><a th:href="'#v' + ${change.currentVersion}" th:text="${change.currentVersion}">version</a></li>
 		</ul>
-		
-		<p></p>
-		
+
 		<figure>
 		<table>
-			<caption>Overiew of Essbase Java API changes as observed in client JAPI JARs</caption>
+			<caption>Overview of Essbase Java API changes as observed in client JAPI JARs</caption>
 			<thead>
 				<tr>
 					<th>Change</th>
@@ -153,20 +162,18 @@
 				<tr class="version-row" th:id="'v' + ${change.currentVersion}">
 					<td>Version</td>
 					<td>
-						<div style="float:left;width:50%;">
-						<strong>
-							<span th:text="${change.currentVersion}">{current version}</span> &mdash;
-							previous: <span th:if="${iter.first}" th:text="${change.previousVersion}"></span>
-							<a th:unless="${iter.first}" th:href="'#v' + ${change.previousVersion}" th:text="${change.previousVersion}">{previous version}</a>
-							<span th:unless="${iter.last}">&mdash; next: <a th:href="'#v' + ${change.nextVersion}" th:text="${change.nextVersion}">{next version}</a></span>
-						</strong>
-						</div>
-						<div style="float:right;width:50%; text-align: right;">
+						<div class="version-heading">
+							<strong>
+								<span th:text="${change.currentVersion}">{current version}</span> &mdash;
+								previous: <span th:if="${iter.first}" th:text="${change.previousVersion}"></span>
+								<a th:unless="${iter.first}" th:href="'#v' + ${change.previousVersion}" th:text="${change.previousVersion}">{previous version}</a>
+								<span th:unless="${iter.last}">&mdash; next: <a th:href="'#v' + ${change.nextVersion}" th:text="${change.nextVersion}">{next version}</a></span>
+							</strong>
 							<em><a href="#top">jump to top</a></em>
 						</div>
 					</td>		
 				</tr>
-				<tr style="vertical-align: top;" th:id="'v' + ${change.currentVersion} + '_added'">
+				<tr th:id="'v' + ${change.currentVersion} + '_added'">
 					<td>Added</td>
 					<td>
 						<ul class="class-list">
