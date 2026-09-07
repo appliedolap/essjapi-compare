@@ -102,7 +102,7 @@ public class JapiAnalyzer {
 			//if (apiClass.getFullyQualifiedName().equals("com.essbase.api.domain.IEssDomain")) {
 				for (JApiMethod method : apiClass.getMethods()) {
 					//if (method.getName().equals("getUser")) {
-						if (TempCompare.isMethodNowDeprecated(method)) {
+						if (ApiChanges.isMethodNowDeprecated(method)) {
 							System.out.println("Deprecated method: " + apiClass.getFullyQualifiedName() + "." + method.getName());							
 						}
 						if (method.getChangeStatus().equals(JApiChangeStatus.NEW)) {

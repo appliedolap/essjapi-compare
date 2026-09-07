@@ -225,10 +225,10 @@
 					<td>Deprecated</td>
 					<td>
 						<ul class="class-list">
-							<li th:each="clazz : ${change.changes}" th:if="${@com.appliedolap.essjapicompare.TempCompare@classGainedDeprecatedMethods(clazz)}">
+							<li th:each="clazz : ${change.changes}" th:if="${@com.appliedolap.essjapicompare.ApiChanges@classGainedDeprecatedMethods(clazz)}">
 								<span th:text="${clazz.fullyQualifiedName}">class name</span>
 								<ul class="method-list">
-									<li th:each="method : ${clazz.methods}" th:if="${@com.appliedolap.essjapicompare.TempCompare@isMethodNowDeprecated(method)}">
+									<li th:each="method : ${clazz.methods}" th:if="${@com.appliedolap.essjapicompare.ApiChanges@isMethodNowDeprecated(method)}">
 										<span th:text="${method.accessModifier.valueNew.toLowerCase()}"></span>
 										<span th:text="${method.returnType.newReturnType}">return type</span> 
 										<span class="method-deprecated" th:text="${method.newMethod.get().longName}">method name</span>
