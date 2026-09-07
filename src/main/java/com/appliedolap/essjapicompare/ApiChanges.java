@@ -55,25 +55,64 @@ public final class ApiChanges {
 	}
 
 	/** Methods of a class that changed in some way; the unchanged majority is not reported. */
-	public static List<JApiMethod> changedMethods(JApiClass clazz) {
-		List<JApiMethod> changed = new ArrayList<JApiMethod>();
+	public static List<MethodChange> changedMethods(JApiClass clazz) {
+		List<MethodChange> changed = new ArrayList<MethodChange>();
 		for (JApiMethod method : clazz.getMethods()) {
 			if (!JApiChangeStatus.UNCHANGED.equals(method.getChangeStatus())) {
-				changed.add(method);
+				changed.add(describe(method));
 			}
 		}
 		return changed;
 	}
 
 	/** Methods of a class that became deprecated in this comparison. */
-	public static List<JApiMethod> newlyDeprecatedMethods(JApiClass clazz) {
-		List<JApiMethod> deprecated = new ArrayList<JApiMethod>();
+	public static List<MethodChange> newlyDeprecatedMethods(JApiClass clazz) {
+		List<MethodChange> deprecated = new ArrayList<MethodChange>();
 		for (JApiMethod method : clazz.getMethods()) {
 			if (isMethodNowDeprecated(method)) {
-				deprecated.add(method);
+				deprecated.add(describeAsDeprecated(method));
 			}
 		}
 		return deprecated;
+	}
+
+	/**
+	 * A changed method, read from whichever side of the comparison actually has it: a removed
+	 * method exists only in the old jar, everything else in the new one.
+	 */
+	private static MethodChange describe(JApiMethod method) {
+		boolean removed = JApiChangeStatus.REMOVED.equals(method.getChangeStatus());
+		String statusClass = "method-" + method.getChangeStatus().name().toLowerCase();
+		if (removed) {
+			return new MethodChange(
+					method.getAccessModifier().getValueOld().toLowerCase(),
+					method.getReturnType().getOldReturnType(),
+					signatureOf(method.getOldMethod(), method),
+					statusClass);
+		}
+		return new MethodChange(
+				method.getAccessModifier().getValueNew().toLowerCase(),
+				method.getReturnType().getNewReturnType(),
+				signatureOf(method.getNewMethod(), method),
+				statusClass);
+	}
+
+	/**
+	 * A newly deprecated method. Always read from the new jar: the method exists in both, and the
+	 * change is the annotation, so its own change status says nothing useful about deprecation and
+	 * cannot supply the class name here.
+	 */
+	private static MethodChange describeAsDeprecated(JApiMethod method) {
+		return new MethodChange(
+				method.getAccessModifier().getValueNew().toLowerCase(),
+				method.getReturnType().getNewReturnType(),
+				signatureOf(method.getNewMethod(), method),
+				"method-deprecated");
+	}
+
+	/** Falls back to the bare method name if japicmp has no handle for that side. */
+	private static String signatureOf(Optional<CtMethod> handle, JApiMethod method) {
+		return handle.isPresent() ? handle.get().getLongName() : method.getName();
 	}
 
 	/**

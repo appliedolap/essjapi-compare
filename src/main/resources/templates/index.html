@@ -57,7 +57,7 @@
 		   defined for both themes. */
 		tr.version-row > td {
 			background: var(--pico-card-sectioning-background-color);
-			border-top: 3px solid var(--pico-primary);
+			border-top: 1px solid var(--pico-primary);
 			font-weight: bold;
 			font-size: 0.8rem;
 		}
@@ -112,6 +112,11 @@
 		.method-removed {
 			color: var(--pico-del-color);
 		}
+
+		/* method-modified is deliberately left at the body colour. A modified method exists on
+		   both sides of the comparison - its signature changed - so neither the added nor the
+		   removed colour is honest about it, and the changed signature is the interesting part.
+		   The class is emitted so it can be styled if that turns out to be wrong. */
 		.method-deprecated {
 			color: var(--pico-muted-color);
 			text-decoration: line-through;
@@ -184,9 +189,9 @@
 								 
 								<ul class="method-list">
 									<li th:each="method : ${@com.appliedolap.essjapicompare.ApiChanges@changedMethods(clazz)}">
-										<span th:text="${method.accessModifier.valueNew.toLowerCase()}"></span>
-										<span th:text="${method.returnType.newReturnType.startsWith('java.lang')} ? ${method.returnType.newReturnType.substring(10)} : ${method.returnType.newReturnType}">method name</span> 
-										<span th:text="${method.newMethod.get().longName}">method name</span>
+										<span th:text="${method.access}"></span>
+										<span th:text="${method.shortReturnType}">return type</span>
+										<span th:text="${method.signature}">method name</span>
 									</li>
 								</ul>
 							</li>
@@ -205,24 +210,9 @@
 								</strong> 
 								<ul class="method-list">
 									<li th:each="method : ${@com.appliedolap.essjapicompare.ApiChanges@changedMethods(clazz)}"> 
-										<!--/* A method in a modified class was either added or removed, and which
-										       one decides whether the new or the old side of the comparison is read.
-										       Grouped rather than six separately-conditional spans, since each span
-										       Thymeleaf removes still costs a line of indentation in the output.
-
-										       Parser-level comment syntax, not an HTML comment: this sits inside the
-										       per-method loop, so an HTML comment here would be copied into the
-										       output once for every method in the report. */-->
-										<th:block th:if="${method.changeStatus.name()} == 'NEW'">
-											<span th:text="${method.accessModifier.valueNew.toLowerCase()}"></span>
-											<span th:text="${method.returnType.newReturnType}">return type</span>
-											<span th:class="'method-' + ${method.changeStatus.name().toLowerCase()}" th:text="${method.newMethod.get().longName}">method name</span>
-										</th:block>
-										<th:block th:if="${method.changeStatus.name()} == 'REMOVED'">
-											<span th:text="${method.accessModifier.valueOld.toLowerCase()}"></span>
-											<span th:text="${method.returnType.oldReturnType}">return type</span>
-											<span th:class="'method-' + ${method.changeStatus.name().toLowerCase()}" th:text="${method.oldMethod.get().longName}">old method name</span>
-										</th:block>
+										<span th:text="${method.access}"></span>
+										<span th:text="${method.returnType}">return type</span>
+										<span th:class="${method.statusClass}" th:text="${method.signature}">method name</span>
 									</li>
 								</ul>
 							</li>
@@ -246,9 +236,9 @@
 								<span th:text="${clazz.fullyQualifiedName}">class name</span>
 								<ul class="method-list">
 									<li th:each="method : ${@com.appliedolap.essjapicompare.ApiChanges@newlyDeprecatedMethods(clazz)}">
-										<span th:text="${method.accessModifier.valueNew.toLowerCase()}"></span>
-										<span th:text="${method.returnType.newReturnType}">return type</span> 
-										<span class="method-deprecated" th:text="${method.newMethod.get().longName}">method name</span>
+										<span th:text="${method.access}"></span>
+										<span th:text="${method.returnType}">return type</span>
+										<span th:class="${method.statusClass}" th:text="${method.signature}">method name</span>
 									</li>
 								</ul>
 							</li>
