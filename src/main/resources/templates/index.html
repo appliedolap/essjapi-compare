@@ -5,9 +5,18 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-	<!-- Pico CSS, vendored and inlined by JapiAnalyzer so this file has no external
-	     dependencies. Pico is classless, so the markup below is plain semantic HTML. -->
-	<style th:utext="${stylesheet}"></style>
+	<!-- Pico CSS, which is classless - the markup below is plain semantic HTML rather than a
+	     scaffold of framework class names.
+
+	     Pinned to an exact version, not the floating @2: a minor release restyling a document
+	     nobody is actively maintaining is exactly the surprise worth avoiding. The integrity
+	     hash means the browser refuses a file that is not the one this page was built against;
+	     the trade-off is that the page renders unstyled rather than differently if jsDelivr ever
+	     serves other bytes. Bumping Pico means updating both the URL and the hash. -->
+	<link rel="stylesheet"
+	      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.1.1/css/pico.min.css"
+	      integrity="sha384-L1dWfspMTHU/ApYnFiMz2QID/PlP1xCW9visvBdbEkOLkSSWsP6ZJWhPw6apiXxU"
+	      crossorigin="anonymous" />
 
 	<style type="text/css">
 		/* Everything below is specific to this report. Kept deliberately small: if a rule can be
