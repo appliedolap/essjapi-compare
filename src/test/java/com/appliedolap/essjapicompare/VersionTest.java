@@ -66,6 +66,32 @@ public class VersionTest {
 		assertEquals("9.3.1", intVersion.toString());
 	}
 	
+	/**
+	 * compareTo() pads the shorter version with zeros, so equals() and hashCode() have to treat
+	 * trailing zeros as insignificant too. These three used to disagree.
+	 */
+	@Test
+	public void testEqualsIsConsistentWithCompareTo() {
+		Version shorter = Version.of("11.1.2");
+		Version padded = Version.of("11.1.2.0");
+
+		assertEquals(0, shorter.compareTo(padded));
+		assertEquals(shorter, padded);
+		assertEquals(shorter.hashCode(), padded.hashCode());
+	}
+
+	@Test
+	public void testEqualsStillDistinguishesDifferentVersions() {
+		assertNotEquals(Version.of("11.1.2.3"), Version.of("11.1.2.4"));
+		assertNotEquals(Version.of("11.1.2"), Version.of("11.1.2.1"));
+	}
+
+	/** The int constructor has to supply the text form too, or toString() has nothing to print. */
+	@Test
+	public void testToStringFromIntComponents() {
+		assertEquals("11.1.2.4", new Version(11, 1, 2, 4).toString());
+	}
+
 	@Test
 	public void testEquals() {
 		Version otherVersionHigher = Version.of("11.1.2.4");

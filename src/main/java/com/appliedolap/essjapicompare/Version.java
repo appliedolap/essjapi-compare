@@ -43,11 +43,18 @@ public class Version implements Comparable<Version> {
 
 	/**
 	 * Construct a new Version object with the explicit version components.
-	 * 
-	 * @param components
+	 *
+	 * @param components the individual version components, most significant first
 	 */
 	public Version(int... components) {
 		this.components = components;
+
+		// toString() reports the original text, so this constructor has to supply it too -
+		// without this it threw a NullPointerException for any Version built from ints.
+		this.textComponents = new String[components.length];
+		for (int index = 0; index < components.length; index++) {
+			this.textComponents[index] = Integer.toString(components[index]);
+		}
 	}
 
 	public int getMajor() {
@@ -141,30 +148,43 @@ public class Version implements Comparable<Version> {
 		return 0;
 	}
 
+	/**
+	 * Consistent with {@link #compareTo(Version)}, which pads the shorter version with zeros -
+	 * so trailing zeros are not significant here either, and 11.1.2 hashes the same as 11.1.2.0.
+	 */
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + Arrays.hashCode(components);
+		for (int index = 0; index < significantLength(); index++) {
+			result = prime * result + components[index];
+		}
 		return result;
 	}
 
+	/**
+	 * Defined in terms of {@link #compareTo(Version)} rather than raw component equality. Those
+	 * two used to disagree: 11.1.2 and 11.1.2.0 compared equal but were not equal, which breaks
+	 * the contract every sorted and hashed collection relies on.
+	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {
 			return true;
 		}
-		if (obj == null) {
+		if (!(obj instanceof Version)) {
 			return false;
 		}
-		if (getClass() != obj.getClass()) {
-			return false;
+		return compareTo((Version) obj) == 0;
+	}
+
+	/** Number of leading components excluding any trailing zeros, which carry no meaning. */
+	private int significantLength() {
+		int length = components.length;
+		while (length > 0 && components[length - 1] == 0) {
+			length--;
 		}
-		Version other = (Version) obj;
-		if (!Arrays.equals(components, other.components)) {
-			return false;
-		}
-		return true;
+		return length;
 	}
 
 }
