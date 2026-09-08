@@ -9,7 +9,7 @@ version against the one before it, then writes a single self-contained HTML page
 was added, removed, modified, or newly deprecated at every step.
 
 The generated page is published straight from this repository at
-**<https://appliedolap.github.io/essjapi-compare/>**. It needs no server, build step, or assets
+**<https://developer.dodecasoftware.com/essjapi-compare/>**. It needs no server, build step, or assets
 alongside it.
 
 ## Why
