@@ -147,6 +147,7 @@ Essbase jar present.
 
 ## License
 
+Copyright 2017-2026 Applied OLAP, Inc., licensed under the
 [Apache License 2.0](LICENSE).
 
 Essbase is a trademark of Oracle Corporation. This project is not affiliated with or endorsed by

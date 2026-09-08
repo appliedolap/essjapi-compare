@@ -20,9 +20,16 @@
 		</license>
 	</licenses>
 
+	<organization>
+		<name>Applied OLAP, Inc.</name>
+		<url>https://www.appliedolap.com/</url>
+	</organization>
+
 	<developers>
 		<developer>
 			<name>Jason Jones</name>
+			<organization>Applied OLAP, Inc.</organization>
+			<organizationUrl>https://www.appliedolap.com/</organizationUrl>
 		</developer>
 	</developers>
 

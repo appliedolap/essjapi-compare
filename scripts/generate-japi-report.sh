@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 #
+# Copyright 2017-2026 Applied OLAP, Inc. Licensed under the Apache License,
+# Version 2.0. See the LICENSE file in the project root.
+#
 # Generate the Essbase Java API Evolution report from one or more folders of
 # versioned Essbase client JARs.
 #
