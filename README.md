@@ -1,5 +1,7 @@
 # essjapi-compare
 
+[![Build](https://github.com/appliedolap/essjapi-compare/actions/workflows/build.yml/badge.svg)](https://github.com/appliedolap/essjapi-compare/actions/workflows/build.yml)
+
 Generates a report of how the Essbase Java API has changed over time.
 
 Point it at a collection of `ess_japi.jar` files — one per Essbase release — and it compares each

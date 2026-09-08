@@ -1,0 +1,55 @@
+name: Build
+
+# Regenerating the report rewrites docs/index.html and nothing else, and that
+# file cannot affect the build, so publishing does not need to spend a runner.
+on:
+  push:
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # 17 is what the project targets; 21 is here because the tools that
+        # read bytecode -- japicmp and javassist -- are the parts most likely
+        # to object to a newer runtime, and finding that out here is cheaper
+        # than finding it out on someone's machine.
+        java: [17, 21]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: temurin
+          cache: maven
+
+      - name: Build and test
+        run: mvn -B --no-transfer-progress verify
+
+      # doclint is configured to fail on malformed javadoc, but only when the
+      # javadoc goal actually runs, which the normal build does not do.
+      - name: Check javadoc
+        run: mvn -B --no-transfer-progress javadoc:javadoc
+
+      # The Essbase jars are Oracle-licensed. They were removed from this
+      # repository and purged from its history; this is what stops them coming
+      # back, since .gitignore only helps someone who has not used "git add -f".
+      - name: Refuse Oracle jars
+        run: |
+          if git ls-files '*.jar' | grep -q .; then
+            echo "::error::A jar is tracked in this repository. Essbase jars must never be committed."
+            git ls-files '*.jar'
+            exit 1
+          fi
