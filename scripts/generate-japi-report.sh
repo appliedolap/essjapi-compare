@@ -19,7 +19,8 @@
 # folders are untouched, and mixed naming conventions are normalized.
 #
 # The Essbase jars are Oracle-licensed and must never be committed to this repo.
-# Only the generated HTML is intended for publishing.
+# Only the generated HTML is intended for publishing; it is written to docs/,
+# which GitHub Pages serves, so committing the result publishes it.
 
 set -euo pipefail
 
@@ -28,7 +29,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CANONICAL_JAR="ess_japi.jar"
 JAR_PATTERN="ess_japi*.jar"
 JAR_EXACT=""
-OUTPUT_FILE="$PROJECT_ROOT/build/essbase-java-api-evolution/index.html"
+OUTPUT_FILE="$PROJECT_ROOT/docs/index.html"
 STAGING_DIR=""
 KEEP_STAGING=0
 DRY_RUN=0
@@ -40,7 +41,8 @@ Usage: scripts/generate-japi-report.sh [options] SOURCE_DIR [SOURCE_DIR...]
 
 Options:
   -o, --output FILE      Output HTML file
-                         (default: build/essbase-java-api-evolution/index.html)
+                         (default: docs/index.html, which is what GitHub Pages
+                         serves; commit it to publish)
   -p, --jar-pattern GLOB Glob for locating the JAPI jar inside each version
                          folder (default: ess_japi*.jar)
   -j, --jar-name NAME    Require this exact jar filename instead of globbing
