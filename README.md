@@ -6,7 +6,8 @@ Point it at a collection of `ess_japi.jar` files — one per Essbase release —
 version against the one before it, then writes a single self-contained HTML page describing what
 was added, removed, modified, or newly deprecated at every step.
 
-The generated page is intended to be published as-is; it needs no server, build step, or assets
+The generated page is published straight from this repository at
+**<https://appliedolap.github.io/essjapi-compare/>**. It needs no server, build step, or assets
 alongside it.
 
 ## Why
@@ -121,6 +122,19 @@ the page follows the reader's light or dark preference.
 The page carries no timestamp, deliberately: regenerating it from an unchanged collection produces
 an identical file, so a rebuild that changes nothing shows up as no diff.
 
+## Publishing
+
+The committed report lives in `docs/`, which GitHub Pages serves from the default branch. So
+publishing an update is just regenerating and committing:
+
+```bash
+scripts/generate-japi-report.sh /path/to/jars
+git add docs/index.html && git commit -m "Regenerate the report"
+```
+
+There is no branch to switch to and no CI step. Because the page carries no timestamp, a
+regeneration that found nothing new produces no diff at all.
+
 ## Layout
 
 ```
@@ -132,6 +146,7 @@ src/main/java/…/JapiCompare.java      CLI entry point
                 Version.java          Essbase version numbers, and their ordering
 src/main/resources/templates/         The Thymeleaf template
 scripts/generate-japi-report.sh       Multi-collection wrapper
+docs/index.html                       The published report, served by GitHub Pages
 ```
 
 ## Tests
